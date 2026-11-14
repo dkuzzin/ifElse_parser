@@ -42,14 +42,9 @@ public class EditorMenuBar extends JMenuBar {
         add(helpMenu);
     }
 
-    private JMenu createMenu(String title, String... items) {
+    private JMenu createMenu(String title) {
         JMenu menu = new JMenu(title);
         menu.setFont(MENU_FONT);
-
-        for (String item : items) {
-            menu.add(styleMenuItem(new JMenuItem(item)));
-        }
-
         return menu;
     }
 

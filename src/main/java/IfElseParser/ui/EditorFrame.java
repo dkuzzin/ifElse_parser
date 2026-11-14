@@ -131,7 +131,6 @@ public class EditorFrame extends JFrame {
 
         Action[] textActions = createTextActions();
 
-        //FILE
         setJMenuBar(new EditorMenuBar(newDocumentAction, openAction, saveAction, saveAsAction,
                 exitAction, helpAction, aboutAction, textActions, undoAction, redoAction, cutAction, copyAction,
                 pasteAction, deleteAction, selectAllAction));

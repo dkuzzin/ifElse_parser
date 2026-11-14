@@ -44,7 +44,6 @@ public final class EditorToolBar extends JToolBar {
         button.setText(null);
         button.setIcon(ToolBarIcon.forAction(name));
         button.setToolTipText(name);
-        button.getAccessibleContext().setAccessibleName(name);
         button.setPreferredSize(BUTTON_SIZE);
         button.setMinimumSize(BUTTON_SIZE);
         button.setMaximumSize(BUTTON_SIZE);
@@ -52,21 +51,11 @@ public final class EditorToolBar extends JToolBar {
     }
 
     public JScrollPane createScrollPane() {
-        JScrollPane scroll = new JScrollPane(this,
+        JScrollPane scroll = new JScrollPane(
+                this,
                 ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER,
-                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED) {
-            @Override
-            public Dimension getPreferredSize() {
-                Dimension size = super.getPreferredSize();
-                // Reserve room for the scrollbar when the window is narrow.
-                if (getWidth() > 0 && getWidth() < EditorToolBar.this.getPreferredSize().width) {
-                    size.height = EditorToolBar.this.getPreferredSize().height
-                            + getHorizontalScrollBar().getPreferredSize().height
-                            + getInsets().top + getInsets().bottom;
-                }
-                return size;
-            }
-        };
+                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
+        );
         scroll.setBorder(BorderFactory.createEmptyBorder());
         return scroll;
     }

@@ -101,33 +101,35 @@ public final class HelpDialog {
 
     public static void show(JFrame owner) {
         JDialog dialog = new JDialog(owner, "Руководство пользователя", true);
-        dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 
         JEditorPane text = new JEditorPane();
-        text.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true);
         text.setContentType("text/html");
-        text.setFont(new Font("Noto Sans", Font.PLAIN, FONT_SIZE));
         text.setEditable(false);
         text.setText(GUIDE);
         text.setCaretPosition(0);
-        text.getAccessibleContext().setAccessibleName("Руководство пользователя");
-        JScrollPane scroll = new JScrollPane(text);
-        scroll.setPreferredSize(CONTENT_SIZE);
 
-        JPanel content = new JPanel(new BorderLayout(0, PADDING));
-        content.setBorder(BorderFactory.createEmptyBorder(PADDING, PADDING, PADDING, PADDING));
-        content.add(scroll, BorderLayout.CENTER);
-        JButton closeButton = EditorDialogs.createButton("Закрыть");
-        closeButton.addActionListener(event -> dialog.dispose());
-        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.TRAILING, 0, 0));
+        JScrollPane scroll = new JScrollPane(text);
+        scroll.setPreferredSize(new Dimension(740, 540));
+
+        JButton closeButton = new JButton("Закрыть");
+        closeButton.addActionListener(e -> dialog.dispose());
+
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttons.add(closeButton);
-        content.add(buttons, BorderLayout.SOUTH);
-        dialog.setContentPane(content);
+
+        dialog.add(scroll, BorderLayout.CENTER);
+        dialog.add(buttons, BorderLayout.SOUTH);
+
         dialog.getRootPane().setDefaultButton(closeButton);
-        dialog.getRootPane().registerKeyboardAction(event -> dialog.dispose(),
-                KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
-        dialog.setMinimumSize(MINIMUM_SIZE);
+        dialog.getRootPane().registerKeyboardAction(
+                e -> dialog.dispose(),
+                KeyStroke.getKeyStroke("ESCAPE"),
+                JComponent.WHEN_IN_FOCUSED_WINDOW
+        );
+
         dialog.pack();
+        dialog.setMinimumSize(new Dimension(480, 360));
         dialog.setLocationRelativeTo(owner);
         dialog.setVisible(true);
     }
