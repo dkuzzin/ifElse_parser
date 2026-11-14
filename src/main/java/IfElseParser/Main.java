@@ -11,17 +11,12 @@ public class Main {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             try {
-                UIManager.setLookAndFeel(
-                        "javax.swing.plaf.nimbus.NimbusLookAndFeel"
-                );
+                UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
             } catch (Exception e) {
                 throw new IllegalStateException("Ошибка настройки GUI", e);
             }
 
-            UIManager.put(
-                    "defaultFont",
-                    new FontUIResource("Noto Sans", Font.PLAIN, UI_FONT_SIZE)
-            );
+            UIManager.put("defaultFont", new FontUIResource("Noto Sans", Font.PLAIN, UI_FONT_SIZE));
 
             EditorFrame frame = new EditorFrame();
             frame.setVisible(true);

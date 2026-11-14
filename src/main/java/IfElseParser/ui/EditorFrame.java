@@ -27,6 +27,7 @@ public class EditorFrame extends JFrame {
     private Path currentFile;
     private String savedText = "";
     private final UndoManager undoManager = new UndoManager();
+
     private final Action undoAction = new AbstractAction("Отменить") {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -102,6 +103,11 @@ public class EditorFrame extends JFrame {
             }
         };
 
+
+
+
+
+
         Action cutAction = createEditorAction("Вырезать", editorArea::cut);
         Action copyAction = createEditorAction("Копировать", editorArea::copy);
         Action pasteAction = createEditorAction("Вставить", editorArea::paste);
@@ -120,8 +126,12 @@ public class EditorFrame extends JFrame {
             }
         };
 
+
+
+
         Action[] textActions = createTextActions();
 
+        //FILE
         setJMenuBar(new EditorMenuBar(newDocumentAction, openAction, saveAction, saveAsAction,
                 exitAction, helpAction, aboutAction, textActions, undoAction, redoAction, cutAction, copyAction,
                 pasteAction, deleteAction, selectAllAction));
@@ -133,7 +143,10 @@ public class EditorFrame extends JFrame {
                 closeDocumentWindow();
             }
         });
+
         setLayout(new BorderLayout());
+
+
 
         EditorToolBar toolBar = new EditorToolBar(
                 new Action[]{newDocumentAction, openAction, saveAction},
@@ -151,20 +164,16 @@ public class EditorFrame extends JFrame {
         editorPanel.add(documentNameLabel, BorderLayout.NORTH);
         editorPanel.add(new JScrollPane(editorArea), BorderLayout.CENTER);
 
-        JSplitPane splitPane = new JSplitPane(
-                JSplitPane.VERTICAL_SPLIT,
-                editorPanel,
-                new JScrollPane(outputArea)
-        );
+
+
+        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, editorPanel, new JScrollPane(outputArea));
 
         splitPane.setResizeWeight(EDITOR_SPACE_SHARE);
 
         add(splitPane, BorderLayout.CENTER);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
 
-        SwingUtilities.invokeLater(
-                () -> splitPane.setDividerLocation(EDITOR_SPACE_SHARE)
-        );
+        SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(EDITOR_SPACE_SHARE));
     }
 
     private Action createEditorAction(String name, Runnable command) {
@@ -202,14 +211,10 @@ public class EditorFrame extends JFrame {
     }
 
     private void updateWindowTitle() {
-        String documentName = currentFile == null
-                ? NEW_DOCUMENT_NAME
-                : currentFile.getFileName().toString();
+        String documentName = currentFile == null ? NEW_DOCUMENT_NAME : currentFile.getFileName().toString();
         setTitle(documentName + " — " + APPLICATION_NAME);
         documentNameLabel.setText(documentName);
-        documentNameLabel.setToolTipText(currentFile == null
-                ? NEW_DOCUMENT_NAME
-                : currentFile.toAbsolutePath().toString());
+        documentNameLabel.setToolTipText(currentFile == null ? NEW_DOCUMENT_NAME : currentFile.toAbsolutePath().toString());
     }
 
     private void resetUndoHistory() {
@@ -223,6 +228,7 @@ public class EditorFrame extends JFrame {
         }
     }
 
+    //todo change to flag? not effective.
     private boolean confirmUnsavedChanges() {
         if (editorArea.getText().equals(savedText)) {
             return true;
@@ -261,8 +267,7 @@ public class EditorFrame extends JFrame {
             updateWindowTitle();
             resetUndoHistory();
         } catch (IOException | SecurityException e) {
-            EditorDialogs.showError(this, "Ошибка открытия",
-                    "Не удалось открыть файл:\n" + e.getMessage());
+            EditorDialogs.showError(this, "Ошибка открытия", "Не удалось открыть файл:\n" + e.getMessage());
         }
     }
 
