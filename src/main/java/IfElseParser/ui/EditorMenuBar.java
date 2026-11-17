@@ -1,61 +1,35 @@
+
 package IfElseParser.ui;
 
 import javax.swing.*;
-import java.awt.*;
+import java.awt.Font;
 
 public class EditorMenuBar extends JMenuBar {
-    private static final int MENU_VERTICAL_PADDING = 8;
-    private static final int MENU_HORIZONTAL_PADDING = 20;
-    private static final String MENU_FONT_FAMILY = "Noto Sans";
-    private static final int MENU_FONT_SIZE = 16;
+    private static final Font MENU_FONT =
+            new Font("Noto Sans", Font.PLAIN, 16);
 
-    private static final Font MENU_FONT =  new Font(MENU_FONT_FAMILY, Font.PLAIN, MENU_FONT_SIZE);
-
-    public EditorMenuBar(Action newDocumentAction, Action openAction, Action saveAction, Action saveAsAction,
-                         Action exitAction, Action helpAction, Action aboutAction, Action[] textActions,
-                         Action... editActions) {
-        JMenu fileMenu = createMenu("Файл");
-        fileMenu.add(styleMenuItem(new JMenuItem(newDocumentAction)));
-        fileMenu.add(styleMenuItem(new JMenuItem(openAction)));
-        fileMenu.add(styleMenuItem(new JMenuItem(saveAction)));
-        fileMenu.add(styleMenuItem(new JMenuItem(saveAsAction)));
-        fileMenu.add(styleMenuItem(new JMenuItem(exitAction)));
-        add(fileMenu);
-
-        JMenu editMenu = createMenu("Правка");
-        for (Action action : editActions) {
-            editMenu.add(styleMenuItem(new JMenuItem(action)));
-        }
-        add(editMenu);
-
-        JMenu textMenu = createMenu("Текст");
-        for (Action action : textActions) {
-            textMenu.add(styleMenuItem(new JMenuItem(action)));
-        }
-        add(textMenu);
-
-        add(new JMenu("Пуск"));
-
-        JMenu helpMenu = createMenu("Справка");
-        helpMenu.add(styleMenuItem(new JMenuItem(helpAction)));
-        helpMenu.add(styleMenuItem(new JMenuItem(aboutAction)));
-        add(helpMenu);
+    public EditorMenuBar(Action[] fileActions, Action[] editActions,
+                         Action[] textActions, Action[] helpActions) {
+        add(createMenu("Файл", fileActions));
+        add(createMenu("Правка", editActions));
+        add(createMenu("Текст", textActions));
+        add(createMenu("Пуск"));
+        add(createMenu("Справка", helpActions));
     }
 
-    private JMenu createMenu(String title) {
+    private JMenu createMenu(String title, Action... actions) {
         JMenu menu = new JMenu(title);
         menu.setFont(MENU_FONT);
-        return menu;
-    }
 
-    private JMenuItem styleMenuItem(JMenuItem item) {
-        item.setFont(MENU_FONT);
-        item.setBorder(BorderFactory.createEmptyBorder(
-                MENU_VERTICAL_PADDING,
-                MENU_HORIZONTAL_PADDING,
-                MENU_VERTICAL_PADDING,
-                MENU_HORIZONTAL_PADDING
-        ));
-        return item;
+        for (Action action : actions) {
+            JMenuItem item = new JMenuItem(action);
+            item.setFont(MENU_FONT);
+            item.setBorder(
+                    BorderFactory.createEmptyBorder(8, 20, 8, 20)
+            );
+            menu.add(item);
+        }
+
+        return menu;
     }
 }

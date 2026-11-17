@@ -2,13 +2,8 @@ package IfElseParser.ui.dialog;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 
 public final class HelpDialog {
-    private static final int PADDING = 16;
-    private static final int FONT_SIZE = 16;
-    private static final Dimension CONTENT_SIZE = new Dimension(740, 540);
-    private static final Dimension MINIMUM_SIZE = new Dimension(480, 360);
     private static final String GUIDE = """
             <html><head><style>
             body { color: #20242b; margin: 18px; }
