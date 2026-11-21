@@ -56,9 +56,7 @@ public class EditorFrame extends JFrame {
         add(splitPane, BorderLayout.CENTER);
 
         setExtendedState(JFrame.MAXIMIZED_BOTH);
-        SwingUtilities.invokeLater(
-                () -> splitPane.setDividerLocation(EDITOR_SPACE_SHARE)
-        );
+        SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(EDITOR_SPACE_SHARE));
     }
 
 
@@ -66,9 +64,11 @@ public class EditorFrame extends JFrame {
         // Команды работы с файлами
         Action newDocumentAction = createAction("Создать", this::newDocument);
         Action openAction = createAction("Открыть", this::openDocument);
-        Action saveAction = createAction("Сохранить", () -> saveDocument());
-        Action saveAsAction = createAction("Сохранить как", () -> saveDocumentAs());
+        Action saveAction = createAction("Сохранить", this::saveDocument);
+        Action saveAsAction = createAction("Сохранить как", this::saveDocumentAs);
         Action exitAction = createAction("Выход", this::closeDocumentWindow);
+
+        Action[] fileActions = {newDocumentAction, openAction, saveAction, saveAsAction, exitAction};
 
         // Команды редактирования
         Action cutAction = createEditorAction("Вырезать", editorArea::cut);
@@ -77,25 +77,16 @@ public class EditorFrame extends JFrame {
         Action deleteAction = createEditorAction("Удалить", () -> editorArea.replaceSelection(""));
         Action selectAllAction = createEditorAction("Выделить всё", editorArea::selectAll);
 
+        Action[] editActions = {
+                undoAction, redoAction, cutAction, copyAction, pasteAction, deleteAction, selectAllAction
+        };
         // Справка
         Action helpAction = createAction("Вызов справки", () -> HelpDialog.show(this));
         Action aboutAction = createAction("О программе", () -> EditorDialogs.showAbout(this));
 
-        Action[] fileActions = {
-                newDocumentAction, openAction, saveAction, saveAsAction, exitAction
-        };
-        Action[] editActions = {
-                undoAction, redoAction, cutAction, copyAction,
-                pasteAction, deleteAction, selectAllAction
-        };
         Action[] helpActions = {helpAction, aboutAction};
 
-        setJMenuBar(new EditorMenuBar(
-                fileActions,
-                editActions,
-                createTextActions(),
-                helpActions
-        ));
+        setJMenuBar(new EditorMenuBar(fileActions, editActions, createTextActions(), helpActions));
 
         EditorToolBar toolBar = new EditorToolBar(
                 new Action[]{newDocumentAction, openAction, saveAction},
@@ -109,11 +100,9 @@ public class EditorFrame extends JFrame {
 
 
     private void configureUndo() {
-        undoAction.putValue(Action.ACCELERATOR_KEY,
-                KeyStroke.getKeyStroke("control Z"));
+        undoAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke("control Z"));
 
-        redoAction.putValue(Action.ACCELERATOR_KEY,
-                KeyStroke.getKeyStroke("control Y"));
+        redoAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke("control Y"));
 
         editorArea.getDocument().addUndoableEditListener(event -> {
             undoManager.addEdit(event.getEdit());
@@ -263,10 +252,6 @@ public class EditorFrame extends JFrame {
         };
     }
 
-    private boolean saveDocument() {
-        return currentFile == null ? saveDocumentAs() : writeDocument(currentFile);
-    }
-
     private void openDocument() {
         JFileChooser chooser = FileChooserStyle.createChooser("Открыть файл");
 
@@ -284,11 +269,15 @@ public class EditorFrame extends JFrame {
             String text = Files.readString(path, StandardCharsets.UTF_8);
             setDocument(text, path);
         } catch (IOException | SecurityException e) {
-            EditorDialogs.showError(this, "Ошибка открытия",
-                    "Не удалось открыть файл:\n" + e.getMessage());
+            EditorDialogs.showError(
+                    this, "Ошибка открытия", "Не удалось открыть файл:\n" + e.getMessage());
         }
     }
 
+
+    private boolean saveDocument() {
+        return currentFile == null ? saveDocumentAs() : writeDocument(currentFile);
+    }
 
     private boolean saveDocumentAs() {
         JFileChooser chooser = FileChooserStyle.createChooser("Сохранить как");
