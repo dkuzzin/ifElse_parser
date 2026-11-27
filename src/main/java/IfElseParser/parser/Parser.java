@@ -104,7 +104,7 @@ public class Parser {
 
     private void digit() {
         if (!hasMore() || !isDigit(current())) {
-            throw syntaxError("Expected digit at position");
+            throw syntaxError("Expected digit");
         }
 
         advance();
@@ -112,7 +112,7 @@ public class Parser {
 
     private void letter() {
         if (!hasMore() || !isLetter(current())) {
-            throw syntaxError("Expected letter at position");
+            throw syntaxError("Expected letter");
         }
 
         advance();
@@ -226,13 +226,20 @@ public class Parser {
     }
 
     private void assignmentWithRecovery(boolean firstBranch) {
+        skipWhitespace();
+
+        if ((hasMore() && current() == '}') || (firstBranch && isElseBranchStart())) {
+            errors.add(new ParseError("Expected: assignment", line, column));
+            return;
+        }
+
         try {
             assignment(firstBranch);;
         } catch (IllegalArgumentException e) {
             errors.add(new ParseError(e.getMessage(), line, column));
 
             while (hasMore() && current() != '}') {
-                if (firstBranch && isElse()) {
+                if (firstBranch && isElseBranchStart()) {
                     break;
                 }
                 advance();

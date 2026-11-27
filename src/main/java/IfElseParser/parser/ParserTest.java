@@ -175,6 +175,22 @@ public class ParserTest {
         // Три ошибки в разных частях конструкции
         testErrors("if (a > -) { x = ; } else { y = -; }", 3);
 
+        testErrors("""
+        if (a > b) {
+        else {
+            y = 20;
+        }
+        """, 2);
+
+        testErrors("""
+        if (a > b) {
+            x = + else;
+        } else {
+            y = 20;
+        }
+        """, 1);
+
+
     }
 
     private static void test(String text, boolean expectedValid) {
