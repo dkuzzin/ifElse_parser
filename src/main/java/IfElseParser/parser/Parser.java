@@ -221,7 +221,7 @@ public class Parser {
 
 
     private void ifElse() {
-        expect("if");
+        expectKeyword("if");
         expect("(");
         conditionWithRecovery();
         expectClosing(")", "{");
@@ -230,7 +230,7 @@ public class Parser {
         assignmentWithRecovery(true);
 
         expectClosing("}", "else");
-        expect("else");
+        expectKeyword("if");
         expect("{");
 
         assignmentWithRecovery(false);
@@ -267,13 +267,15 @@ public class Parser {
             return;
         }
 
-        if (text.startsWith(next, position)) {
+        boolean foundNext = next.equals("else") ? isElse() : text.startsWith(next, position);
+        if (foundNext) {
             errors.add(new ParseError("Expected: " + expected, line, column));
             return;
         }
 
         throw syntaxError("Expected: " + expected);
     }
+
 
 
     private boolean isElse() {
@@ -286,6 +288,22 @@ public class Parser {
         return (position == 0 || !isLetter(text.charAt(position - 1)) &&
                         !isDigit(text.charAt(position - 1))) && (end == text.length() ||
                         !isLetter(text.charAt(end)) && !isDigit(text.charAt(end)));
+    }
+
+    private void expectKeyword(String keyword) {
+        skipWhitespace();
+
+        int end = position + keyword.length();
+
+        if (!text.startsWith(keyword, position) ||
+                (end < text.length() &&
+                        (isLetter(text.charAt(end)) || isDigit(text.charAt(end))))) {
+            throw syntaxError("Expected: " + keyword);
+        }
+
+        for (int i = 0; i < keyword.length(); i++) {
+            advance();
+        }
     }
 
 }

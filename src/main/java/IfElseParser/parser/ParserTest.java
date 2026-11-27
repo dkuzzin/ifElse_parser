@@ -80,10 +80,24 @@ public class ParserTest {
             y = 20
         }
         """, 5);
+
+        testErrors("""
+        if (a > b) {
+            x = 10;
+        elsewhere {
+            y = 20;
+        }
+        """, 1);
+
+        testErrors("""
+        ifx (a > b) {
+            x = 10;
+        } else {
+            y = 20;
+        }
+        """, 1);
+
     }
-
-
-
 
     private static void test(String text, boolean expectedValid) {
         List<ParseError> errors = new Parser(text).analyze();
