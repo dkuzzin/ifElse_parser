@@ -190,6 +190,14 @@ public class ParserTest {
         }
         """, 1);
 
+        testErrors("""
+        if (a b && c d) {
+            x = 1;
+        } else {
+            y = 2;
+        }
+        """, 2);
+
 
     }
 

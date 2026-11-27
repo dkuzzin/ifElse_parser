@@ -175,17 +175,32 @@ public class Parser {
         }
     }
 
+
     private void comparison() {
         value();
-        compareOp();
+
+        try {
+            compareOp();
+        } catch (IllegalArgumentException e) {
+            skipWhitespace();
+
+            if (!hasMore() || !(isLetter(current()) || isDigit(current()) || current() == '-')) {
+                throw e;
+            }
+
+            errors.add(new ParseError("Expected: comparison operator", line, column));
+        }
 
         if (atComparisonBoundary()) {
-            errors.add(new ParseError("Expected: value", line, column));
+            errors.add(new ParseError(
+                    "Expected: value", line, column
+            ));
             return;
         }
 
         value();
     }
+
 
 
 
