@@ -2,25 +2,24 @@ package IfElseParser;
 
 import IfElseParser.ui.EditorFrame;
 import javax.swing.*;
-import javax.swing.plaf.FontUIResource;
-import java.awt.*;
 
 public class Main {
-    private static final int UI_FONT_SIZE = 16;
 
     public static void main(String[] args) {
+        System.setProperty("awt.useSystemAAFontSettings", "on");
+        System.setProperty("swing.aatext", "true");
+
         SwingUtilities.invokeLater(() -> {
             try {
-                UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
+                UIManager.setLookAndFeel(
+                        UIManager.getSystemLookAndFeelClassName()
+                );
             } catch (Exception e) {
                 throw new IllegalStateException("Ошибка настройки GUI", e);
             }
 
-            UIManager.put("defaultFont", new FontUIResource("Noto Sans", Font.PLAIN, UI_FONT_SIZE));
-
             EditorFrame frame = new EditorFrame();
             frame.setVisible(true);
         });
-
     }
 }

@@ -16,6 +16,8 @@ import java.nio.charset.StandardCharsets;
 import IfElseParser.parser.Parser;
 import IfElseParser.parser.ParseError;
 import java.util.List;
+import java.io.InputStream;
+import javax.swing.event.DocumentEvent;
 
 public class EditorFrame extends JFrame {
     private static final double EDITOR_SPACE_SHARE = 0.7;
@@ -23,7 +25,7 @@ public class EditorFrame extends JFrame {
     private static final String NEW_DOCUMENT_NAME = "Новый документ";
     private static final int EDITOR_FONT_SIZE = 18;
 
-    private final JTextArea editorArea = new JTextArea();
+    private final JTextPane editorArea = new JTextPane();
     private final JTextArea outputArea = new JTextArea();
     private final JLabel documentNameLabel = new JLabel(NEW_DOCUMENT_NAME);
     private Path currentFile;
@@ -48,8 +50,14 @@ public class EditorFrame extends JFrame {
     public EditorFrame() {
         super(NEW_DOCUMENT_NAME + " — " + APPLICATION_NAME);
 
-        editorArea.setFont(new Font("Noto Sans Mono", Font.PLAIN, EDITOR_FONT_SIZE));
+        Font editorFont = loadEditorFont();
 
+        editorArea.setFont(editorFont);
+        outputArea.setFont(editorFont);
+        editorArea.setMargin(new Insets(8, 10, 8, 10));
+        outputArea.setMargin(new Insets(8, 10, 8, 10));
+
+        new SyntaxHighlighter(editorArea);
         configureUndo();
         configureWindowClosing();
         configureMenusAndToolBar();
@@ -132,6 +140,12 @@ public class EditorFrame extends JFrame {
         redoAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke("control Y"));
 
         editorArea.getDocument().addUndoableEditListener(event -> {
+
+            if (event.getEdit() instanceof DocumentEvent documentEvent
+                    && documentEvent.getType() == DocumentEvent.EventType.CHANGE) {
+                return;
+            }
+
             undoManager.addEdit(event.getEdit());
             updateUndoActions();
         });
@@ -345,6 +359,22 @@ public class EditorFrame extends JFrame {
             EditorDialogs.showError(this, "Ошибка сохранения",
                     "Не удалось сохранить файл:\n" + e.getMessage());
             return false;
+        }
+    }
+    private Font loadEditorFont() {
+        try (InputStream stream = getClass().getResourceAsStream(
+                "/fonts/JetBrainsMono-Regular.ttf")) {
+
+            if (stream == null) {
+                throw new IOException("Файл шрифта не найден");
+            }
+
+            return Font.createFont(Font.TRUETYPE_FONT, stream)
+                    .deriveFont((float) EDITOR_FONT_SIZE);
+
+        } catch (IOException | FontFormatException e) {
+            System.err.println("Ошибка загрузки шрифта: " + e.getMessage());
+            return new Font("Monospaced", Font.PLAIN, EDITOR_FONT_SIZE);
         }
     }
 }
