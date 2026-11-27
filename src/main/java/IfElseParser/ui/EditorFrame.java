@@ -3,9 +3,8 @@ package IfElseParser.ui;
 import IfElseParser.ui.dialog.EditorDialogs;
 import IfElseParser.ui.dialog.HelpDialog;
 import IfElseParser.ui.dialog.TextInfoDialog;
-import java.awt.event.ActionEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+
+import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.text.Element;
 import javax.swing.undo.UndoManager;
@@ -22,20 +21,19 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.text.Highlighter;
 import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.BadLocationException;
-import javax.swing.text.Element;
 
 public class EditorFrame extends JFrame {
     private static final double EDITOR_SPACE_SHARE = 0.7;
     private static final String APPLICATION_NAME = "IfElseParser";
     private static final String NEW_DOCUMENT_NAME = "Новый документ";
     private static final int EDITOR_FONT_SIZE = 18;
-
     private final JTextPane editorArea = new JTextPane();
     private final JTextArea outputArea = new JTextArea();
     private final JLabel documentNameLabel = new JLabel(NEW_DOCUMENT_NAME);
     private Path currentFile;
     private String savedText = "";
     private final UndoManager undoManager = new UndoManager();
+    private List<ParseError> displayedErrors = List.of();
 
     private final Action undoAction = createAction("Отменить", () -> {
         if (undoManager.canUndo()) {
@@ -66,6 +64,7 @@ public class EditorFrame extends JFrame {
         configureUndo();
         configureWindowClosing();
         configureMenusAndToolBar();
+        configureErrorNavigation();
 
         JSplitPane splitPane = createEditorSplitPane();
         add(splitPane, BorderLayout.CENTER);
@@ -119,6 +118,7 @@ public class EditorFrame extends JFrame {
         editorArea.getHighlighter().removeAllHighlights();
 
         List<ParseError> errors = new Parser(editorArea.getText()).analyze();
+        displayedErrors = List.copyOf(errors);
 
         if (errors.isEmpty()) {
             outputArea.setText("Синтаксических ошибок не обнаружено.");
@@ -141,6 +141,48 @@ public class EditorFrame extends JFrame {
         outputArea.setCaretPosition(0);
         highlightErrors(errors);
     }
+
+
+    private void configureErrorNavigation() {
+        outputArea.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int offset = outputArea.viewToModel2D(e.getPoint());
+
+                Element root = outputArea.getDocument()
+                        .getDefaultRootElement();
+
+                int index = root.getElementIndex(offset);
+
+                if (index >= displayedErrors.size()) {
+                    return;
+                }
+
+                ParseError error = displayedErrors.get(index);
+
+                Element editorRoot = editorArea.getDocument()
+                        .getDefaultRootElement();
+
+                Element line = editorRoot.getElement(error.line() - 1);
+
+                if (line == null) {
+                    return;
+                }
+
+                int position = line.getStartOffset()
+                        + error.column() - 1;
+
+                position = Math.min(
+                        position,
+                        editorArea.getDocument().getLength()
+                );
+
+                editorArea.requestFocusInWindow();
+                editorArea.setCaretPosition(position);
+            }
+        });
+    }
+
 
     private void configureUndo() {
         undoAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke("control Z"));
@@ -390,31 +432,26 @@ public class EditorFrame extends JFrame {
 
 
 
+
     private void highlightErrors(List<ParseError> errors) {
         Highlighter highlighter = editorArea.getHighlighter();
         highlighter.removeAllHighlights();
 
-        Highlighter.HighlightPainter errorPainter =
-                new DefaultHighlighter.DefaultHighlightPainter(
-                        new Color(255, 150, 150)
-                );
-
-        Highlighter.HighlightPainter missingPainter =
+        Highlighter.HighlightPainter underlinePainter =
                 (g, start, end, bounds, component) -> {
                     try {
                         Rectangle r = component.modelToView2D(start).getBounds();
 
                         g.setColor(Color.RED);
-                        g.fillRect(r.x, r.y, 3, r.height);
+                        int y = r.y + r.height - 2;
+                        g.drawLine(r.x, y, r.x + 10, y);
+
                     } catch (BadLocationException ignored) {
                     }
                 };
 
         Element root = editorArea.getDocument().getDefaultRootElement();
-        String text = editorArea.getText();
         int length = editorArea.getDocument().getLength();
-
-        int firstPosition = -1;
 
         for (ParseError error : errors) {
             Element line = root.getElement(error.line() - 1);
@@ -423,33 +460,15 @@ public class EditorFrame extends JFrame {
                 continue;
             }
 
-            int position = line.getStartOffset() + error.column() - 1;
-            position = Math.min(position, length);
-
-            if (firstPosition == -1) {
-                firstPosition = position;
-            }
-
-            boolean missing = error.message().startsWith("Expected: ");
-            boolean atLineEnd = position == length ||
-                    text.charAt(position) == '\n';
+            int position = Math.min(
+                    line.getStartOffset() + error.column() - 1,
+                    length
+            );
 
             try {
-                if (missing || atLineEnd) {
-                    highlighter.addHighlight(
-                            position, position, missingPainter
-                    );
-                } else {
-                    highlighter.addHighlight(
-                            position, position + 1, errorPainter
-                    );
-                }
+                highlighter.addHighlight(position, position, underlinePainter);
             } catch (BadLocationException ignored) {
             }
-        }
-
-        if (firstPosition != -1) {
-            editorArea.setCaretPosition(firstPosition);
         }
     }
 
