@@ -62,10 +62,19 @@ public class Parser {
     }
 
     private void expect(String expected) {
+        int savedPosition = position;
+        int savedLine = line;
+        int savedColumn = column;
+
         if (!match(expected)) {
+            position = savedPosition;
+            line = savedLine;
+            column = savedColumn;
+
             throw syntaxError("Expected: " + expected);
         }
     }
+
 
     private void condition() {
         andExpr();

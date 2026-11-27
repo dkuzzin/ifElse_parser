@@ -7,6 +7,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import javax.swing.*;
+import javax.swing.text.Element;
 import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.io.IOException;
@@ -18,6 +19,10 @@ import IfElseParser.parser.ParseError;
 import java.util.List;
 import java.io.InputStream;
 import javax.swing.event.DocumentEvent;
+import javax.swing.text.Highlighter;
+import javax.swing.text.DefaultHighlighter;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Element;
 
 public class EditorFrame extends JFrame {
     private static final double EDITOR_SPACE_SHARE = 0.7;
@@ -111,6 +116,8 @@ public class EditorFrame extends JFrame {
     }
 
     private void runParser() {
+        editorArea.getHighlighter().removeAllHighlights();
+
         List<ParseError> errors = new Parser(editorArea.getText()).analyze();
 
         if (errors.isEmpty()) {
@@ -132,6 +139,7 @@ public class EditorFrame extends JFrame {
 
         outputArea.setText(result.toString());
         outputArea.setCaretPosition(0);
+        highlightErrors(errors);
     }
 
     private void configureUndo() {
@@ -377,4 +385,73 @@ public class EditorFrame extends JFrame {
             return new Font("Monospaced", Font.PLAIN, EDITOR_FONT_SIZE);
         }
     }
+
+
+
+
+
+    private void highlightErrors(List<ParseError> errors) {
+        Highlighter highlighter = editorArea.getHighlighter();
+        highlighter.removeAllHighlights();
+
+        Highlighter.HighlightPainter errorPainter =
+                new DefaultHighlighter.DefaultHighlightPainter(
+                        new Color(255, 150, 150)
+                );
+
+        Highlighter.HighlightPainter missingPainter =
+                (g, start, end, bounds, component) -> {
+                    try {
+                        Rectangle r = component.modelToView2D(start).getBounds();
+
+                        g.setColor(Color.RED);
+                        g.fillRect(r.x, r.y, 3, r.height);
+                    } catch (BadLocationException ignored) {
+                    }
+                };
+
+        Element root = editorArea.getDocument().getDefaultRootElement();
+        String text = editorArea.getText();
+        int length = editorArea.getDocument().getLength();
+
+        int firstPosition = -1;
+
+        for (ParseError error : errors) {
+            Element line = root.getElement(error.line() - 1);
+
+            if (line == null) {
+                continue;
+            }
+
+            int position = line.getStartOffset() + error.column() - 1;
+            position = Math.min(position, length);
+
+            if (firstPosition == -1) {
+                firstPosition = position;
+            }
+
+            boolean missing = error.message().startsWith("Expected: ");
+            boolean atLineEnd = position == length ||
+                    text.charAt(position) == '\n';
+
+            try {
+                if (missing || atLineEnd) {
+                    highlighter.addHighlight(
+                            position, position, missingPainter
+                    );
+                } else {
+                    highlighter.addHighlight(
+                            position, position + 1, errorPainter
+                    );
+                }
+            } catch (BadLocationException ignored) {
+            }
+        }
+
+        if (firstPosition != -1) {
+            editorArea.setCaretPosition(firstPosition);
+        }
+    }
+
+
 }
