@@ -178,8 +178,15 @@ public class Parser {
     private void comparison() {
         value();
         compareOp();
+
+        if (atComparisonBoundary()) {
+            errors.add(new ParseError("Expected: value", line, column));
+            return;
+        }
+
         value();
     }
+
 
 
     private void andExpr() {
@@ -190,12 +197,27 @@ public class Parser {
         }
     }
 
-    private void assignment() {
+
+
+    private void assignment(boolean firstBranch) {
         identifier();
-        expect("=");
-        value();
+        expectEqualsWithRecovery();
+
+        int valueLine = line;
+        int valueColumn = column;
+
+        skipWhitespace();
+
+        if (!hasMore() || current() == ';' || current() == '}' || (firstBranch && isElseBranchStart())) {
+            errors.add(new ParseError("Expected: value", valueLine, valueColumn));
+        } else {
+            value();
+        }
+
         expect(";");
     }
+
+
 
     private void skipUntil(char first, char second) {
         while (hasMore() && current() != first && current() != second) {
@@ -205,7 +227,7 @@ public class Parser {
 
     private void assignmentWithRecovery(boolean firstBranch) {
         try {
-            assignment();
+            assignment(firstBranch);;
         } catch (IllegalArgumentException e) {
             errors.add(new ParseError(e.getMessage(), line, column));
 
@@ -313,6 +335,55 @@ public class Parser {
         for (int i = 0; i < keyword.length(); i++) {
             advance();
         }
+    }
+
+
+    private void expectEqualsWithRecovery() {
+        int errorLine = line;
+        int errorColumn = column;
+
+        if (match("=")) {
+            return;
+        }
+
+        if (hasMore() &&
+                (isLetter(current()) ||
+                        isDigit(current()) ||
+                        current() == '-')) {
+
+            errors.add(new ParseError(
+                    "Expected: =", errorLine, errorColumn
+            ));
+            return;
+        }
+
+        throw syntaxError("Expected: =");
+    }
+
+
+    private boolean atComparisonBoundary() {
+        skipWhitespace();
+
+        return !hasMore()
+                || text.startsWith("&&", position)
+                || text.startsWith("||", position)
+                || current() == ')'
+                || current() == '{';
+    }
+
+    private boolean isElseBranchStart() {
+        if (!isElse()) {
+            return false;
+        }
+
+        int next = position + 4;
+
+        while (next < text.length() &&
+                Character.isWhitespace(text.charAt(next))) {
+            next++;
+        }
+
+        return next < text.length() && text.charAt(next) == '{';
     }
 
 }
