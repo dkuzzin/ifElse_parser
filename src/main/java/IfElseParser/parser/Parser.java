@@ -63,7 +63,7 @@ public class Parser {
 
     private void expect(String expected) {
         if (!match(expected)) {
-            throw syntaxError("Expected: " + expected + ", position: " + position);
+            throw syntaxError("Expected: " + expected);
         }
     }
 
@@ -82,7 +82,7 @@ public class Parser {
             return;
         }
 
-        throw syntaxError("Expected comparison operator at position " + position);
+        throw syntaxError("Expected comparison operator");
     }
 
     private boolean isLetter(char c) {
@@ -95,7 +95,7 @@ public class Parser {
 
     private void digit() {
         if (!hasMore() || !isDigit(current())) {
-            throw syntaxError("Expected digit at position " + position);
+            throw syntaxError("Expected digit at position");
         }
 
         advance();
@@ -103,7 +103,7 @@ public class Parser {
 
     private void letter() {
         if (!hasMore() || !isLetter(current())) {
-            throw syntaxError("Expected letter at position " + position);
+            throw syntaxError("Expected letter at position");
         }
 
         advance();
@@ -152,17 +152,17 @@ public class Parser {
         skipWhitespace();
 
         if (!hasMore()) {
-            throw syntaxError("Expected value at position " + position);
+            throw syntaxError("Expected value");
         }
 
         char c = current();
 
         if (isLetter(c)) {
             identifier();
-        } else if (isDigit(c)| c == '-') {
+        } else if (isDigit(c) || c == '-') {
             number();
         } else {
-            throw syntaxError("Expected identifier or number at position " + position);
+            throw syntaxError("Expected identifier or number");
         }
     }
 
@@ -188,19 +188,11 @@ public class Parser {
         expect(";");
     }
 
-    private void skipUntil(char symbol) {
-        while (hasMore() && current() != symbol) {
-            advance();
-        }
-    }
-
     private void skipUntil(char first, char second) {
         while (hasMore() && current() != first && current() != second) {
             advance();
         }
     }
-
-
 
     private void assignmentWithRecovery(boolean firstBranch) {
         try {
@@ -247,6 +239,9 @@ public class Parser {
     }
 
     public List<ParseError> analyze() {
+        position = 0;
+        line = 1;
+        column = 1;
         errors.clear();
 
         try {
