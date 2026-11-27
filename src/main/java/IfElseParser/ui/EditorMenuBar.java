@@ -9,11 +9,11 @@ public class EditorMenuBar extends JMenuBar {
             new Font("Noto Sans", Font.PLAIN, 16);
 
     public EditorMenuBar(Action[] fileActions, Action[] editActions,
-                         Action[] textActions, Action[] helpActions) {
+                         Action[] textActions, Action runAction, Action[] helpActions) {
         add(createMenu("Файл", fileActions));
         add(createMenu("Правка", editActions));
         add(createMenu("Текст", textActions));
-        add(createMenu("Пуск"));
+        add(createMenu("Пуск", runAction));
         add(createMenu("Справка", helpActions));
     }
 

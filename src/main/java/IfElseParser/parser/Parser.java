@@ -230,7 +230,7 @@ public class Parser {
         assignmentWithRecovery(true);
 
         expectClosing("}", "else");
-        expectKeyword("if");
+        expectKeyword("else");
         expect("{");
 
         assignmentWithRecovery(false);

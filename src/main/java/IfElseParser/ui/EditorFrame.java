@@ -13,7 +13,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.charset.StandardCharsets;
-
+import IfElseParser.parser.Parser;
+import IfElseParser.parser.ParseError;
+import java.util.List;
 
 public class EditorFrame extends JFrame {
     private static final double EDITOR_SPACE_SHARE = 0.7;
@@ -57,6 +59,7 @@ public class EditorFrame extends JFrame {
 
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         SwingUtilities.invokeLater(() -> splitPane.setDividerLocation(EDITOR_SPACE_SHARE));
+
     }
 
 
@@ -86,18 +89,42 @@ public class EditorFrame extends JFrame {
 
         Action[] helpActions = {helpAction, aboutAction};
 
-        setJMenuBar(new EditorMenuBar(fileActions, editActions, createTextActions(), helpActions));
+
+        Action runAction = createAction("Пуск", this::runParser);
+        setJMenuBar(new EditorMenuBar(fileActions, editActions, createTextActions(), runAction, helpActions));
 
         EditorToolBar toolBar = new EditorToolBar(
                 new Action[]{newDocumentAction, openAction, saveAction},
                 new Action[]{undoAction, redoAction, copyAction, cutAction, pasteAction},
+                runAction,
                 helpActions
         );
-
         add(toolBar.createScrollPane(), BorderLayout.NORTH);
     }
 
+    private void runParser() {
+        List<ParseError> errors = new Parser(editorArea.getText()).analyze();
 
+        if (errors.isEmpty()) {
+            outputArea.setText("Синтаксических ошибок не обнаружено.");
+            return;
+        }
+
+        StringBuilder result = new StringBuilder();
+
+        for (ParseError error : errors) {
+            result.append("Строка ")
+                    .append(error.line())
+                    .append(", столбец ")
+                    .append(error.column())
+                    .append(": ")
+                    .append(error.message())
+                    .append("\n");
+        }
+
+        outputArea.setText(result.toString());
+        outputArea.setCaretPosition(0);
+    }
 
     private void configureUndo() {
         undoAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke("control Z"));

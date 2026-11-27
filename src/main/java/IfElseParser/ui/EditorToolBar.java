@@ -11,7 +11,8 @@ public final class EditorToolBar extends JToolBar {
     private static final int GROUP_GAP = 12;
     private static final Dimension BUTTON_SIZE = new Dimension(42, 38);
 
-    public EditorToolBar(Action[] fileActions, Action[] editActions, Action[] helpActions) {
+    public EditorToolBar(Action[] fileActions, Action[] editActions,
+                         Action runAction, Action[] helpActions){
         setFloatable(false);
         setBorder(BorderFactory.createEmptyBorder(PADDING, PADDING, PADDING, PADDING));
         addActions(fileActions);
@@ -19,10 +20,7 @@ public final class EditorToolBar extends JToolBar {
         addActions(editActions);
         addSeparator(new Dimension(GROUP_GAP, 0));
 
-        JButton runButton = createIconButton("Пуск", null);
-        runButton.setEnabled(false);
-        runButton.setToolTipText("Анализатор текста пока не реализован");
-        add(runButton);
+        add(createIconButton("Пуск", runAction));
         addSeparator(new Dimension(GROUP_GAP, 0));
         addActions(helpActions);
     }
