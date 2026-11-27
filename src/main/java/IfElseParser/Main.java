@@ -21,5 +21,6 @@ public class Main {
             EditorFrame frame = new EditorFrame();
             frame.setVisible(true);
         });
+
     }
 }
