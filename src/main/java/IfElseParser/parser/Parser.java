@@ -15,6 +15,15 @@ public class Parser {
         this.position = 0;
     }
 
+    private void neutralize(String message, int errorLine, int errorColumn, String q, String... boundaries) {
+        errors.add(new ParseError(message, errorLine, errorColumn, q));
+
+        if (q.isEmpty()) {
+            recoverTo(boundaries);
+        }
+    }
+
+
     private boolean hasMore() {
         return position < text.length();
     }
@@ -224,7 +233,13 @@ public class Parser {
             value();
         }
 
-        expect(";");
+
+        if (firstBranch) {
+            expectOrInsert(";", "}", "else");
+        } else {
+            expectOrInsert(";", "}");
+        }
+
     }
 
 
@@ -246,9 +261,7 @@ public class Parser {
         try {
             assignment(firstBranch);;
         } catch (IllegalArgumentException e) {
-            String q = e.getMessage().equals("Expected: ;") ? ";" : "";
-
-            errors.add(new ParseError(e.getMessage(), line, column, q));
+            errors.add(new ParseError(e.getMessage(), line, column));
 
             if (firstBranch) {
                 recoverTo("}", "else");
@@ -263,9 +276,7 @@ public class Parser {
         try {
             condition();
         } catch (IllegalArgumentException e) {
-            errors.add(new ParseError(e.getMessage(), line, column));
-
-            recoverTo(")", "{");
+            neutralize(e.getMessage(), line, column, "", ")", "{");
         }
     }
 
@@ -275,12 +286,12 @@ public class Parser {
         expectKeyword("if");
         expect("(");
         conditionWithRecovery();
-        expectClosing(")", "{");
+        expectOrInsert(")", "{");
         expect("{");
 
         assignmentWithRecovery(true);
 
-        expectClosing("}", "else");
+        expectOrInsert("}", "else");
         expectKeyword("else");
         expect("{");
 
@@ -314,16 +325,23 @@ public class Parser {
     }
 
 
-    private void expectClosing(String expected, String next) {
+    private void expectOrInsert(String expected, String... nextTokens) {
+        int errorLine = line;
+        int errorColumn = column;
+
         if (match(expected)) {
             return;
         }
 
-        boolean foundNext = next.equals("else") ? isElse() : text.startsWith(next, position);
+        for (String next : nextTokens) {
+            boolean found = next.equals("else")
+                    ? isElseBranchStart()
+                    : text.startsWith(next, position);
 
-        if (foundNext) {
-            errors.add(new ParseError("Expected: " + expected, line, column, expected));
-            return;
+            if (found) {
+                neutralize("Expected: " + expected, errorLine, errorColumn, expected);
+                return;
+            }
         }
 
         throw syntaxError("Expected: " + expected);
@@ -414,9 +432,7 @@ public class Parser {
         try {
             comparison();
         } catch (IllegalArgumentException e) {
-            errors.add(new ParseError(e.getMessage(), line, column));
-
-            recoverTo("&&", "||", ")", "{");
+            neutralize(e.getMessage(), line, column, "", "&&", "||", ")", "{");
         }
     }
 

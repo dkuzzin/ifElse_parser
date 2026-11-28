@@ -272,6 +272,37 @@ public class ParserTest {
 
         System.out.println("Combined q = " + q);
 
+
+
+        String source = """
+        if (a > b) {
+            x = 10
+        else {
+            y = 20;
+        }
+        """;
+
+        System.out.println("======================");
+        errors = new Parser(source).analyze();
+
+        for (ParseError error : errors) {
+            System.out.println(
+                    error.message() + ", q = " + error.q()
+            );
+        }
+        testErrors(
+                "if (a > b { x = 10 else { y = 20 }",
+                4
+        );
+
+        errors = new Parser(
+                "if (a > b { x = 10 else { y = 20 }"
+        ).analyze();
+
+        for (ParseError error : errors) {
+            System.out.println(error.message() + " | q = " + error.q());
+        }
+
     }
 
     private static void test(String text, boolean expectedValid) {
