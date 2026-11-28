@@ -10,6 +10,22 @@ public class Parser {
     private int column = 1;
     private final List<ParseError> errors = new ArrayList<>();
 
+    private enum RecoveryContext {
+        COMPARISON,
+        CONDITION,
+        FIRST_ASSIGNMENT,
+        SECOND_ASSIGNMENT
+    }
+
+    private String[] continuations(RecoveryContext context) {
+        return switch (context) {
+            case COMPARISON -> new String[]{"&&", "||", ")", "{"};
+            case CONDITION -> new String[]{")", "{"};
+            case FIRST_ASSIGNMENT -> new String[]{"}", "else"};
+            case SECOND_ASSIGNMENT -> new String[]{"}"};
+        };
+    }
+
     public Parser(String text) {
         this.text = text;
         this.position = 0;
@@ -134,16 +150,11 @@ public class Parser {
     }
 
     private void idTail() {
-        if (!hasMore()) return;
-
-        if (isLetter(current())) {
-            letter();
-            idTail();
-        } else if (isDigit(current())) {
-            digit();
-            idTail();
+        while (hasMore() && (isLetter(current()) || isDigit(current()))) {
+            advance();
         }
     }
+
 
 
     private void number() {
@@ -160,11 +171,11 @@ public class Parser {
     }
 
     private void numTail() {
-        if (hasMore() && isDigit(current())) {
-            digit();
-            numTail();
+        while (hasMore() && isDigit(current())) {
+            advance();
         }
     }
+
 
     private void value() {
         skipWhitespace();
@@ -228,7 +239,7 @@ public class Parser {
         skipWhitespace();
 
         if (!hasMore() || current() == ';' || current() == '}' || (firstBranch && isElseBranchStart())) {
-            errors.add(new ParseError("Expected: value", valueLine, valueColumn));
+            neutralize("Expected: value", valueLine, valueColumn, "0");
         } else {
             value();
         }
@@ -242,41 +253,32 @@ public class Parser {
 
     }
 
-
-
-    private void skipUntil(char first, char second) {
-        while (hasMore() && current() != first && current() != second) {
-            advance();
-        }
-    }
-
     private void assignmentWithRecovery(boolean firstBranch) {
         skipWhitespace();
 
-        if ((hasMore() && current() == '}') || (firstBranch && isElseBranchStart())) {
+        if ((hasMore() && current() == '}') ||
+                (firstBranch && isElseBranchStart())) {
             errors.add(new ParseError("Expected: assignment", line, column));
             return;
         }
 
         try {
-            assignment(firstBranch);;
+            assignment(firstBranch);
         } catch (IllegalArgumentException e) {
-            errors.add(new ParseError(e.getMessage(), line, column));
+            RecoveryContext context = firstBranch
+                    ? RecoveryContext.FIRST_ASSIGNMENT : RecoveryContext.SECOND_ASSIGNMENT;
 
-            if (firstBranch) {
-                recoverTo("}", "else");
-            } else {
-                recoverTo("}");
-            }
+            neutralize(e.getMessage(), line, column, "", continuations(context));
         }
     }
+
 
 
     private void conditionWithRecovery() {
         try {
             condition();
         } catch (IllegalArgumentException e) {
-            neutralize(e.getMessage(), line, column, "", ")", "{");
+            neutralize(e.getMessage(), line, column, "", continuations(RecoveryContext.CONDITION));
         }
     }
 
@@ -297,7 +299,14 @@ public class Parser {
 
         assignmentWithRecovery(false);
 
-        expect("}");
+        if (!match("}")) {
+            if (!hasMore()) {
+                neutralize("Expected: }", line, column, "}");
+            } else {
+                throw syntaxError("Expected: }");
+            }
+        }
+
     }
 
     public List<ParseError> analyze() {
@@ -330,6 +339,11 @@ public class Parser {
         int errorColumn = column;
 
         if (match(expected)) {
+            return;
+        }
+
+        if (!hasMore() && expected.equals(";")) {
+            neutralize("Expected: ;", errorLine, errorColumn, ";");
             return;
         }
 
@@ -392,9 +406,7 @@ public class Parser {
                         isDigit(current()) ||
                         current() == '-')) {
 
-            errors.add(new ParseError(
-                    "Expected: =", errorLine, errorColumn
-            ));
+            neutralize("Expected: =", errorLine, errorColumn, "=");
             return;
         }
 
@@ -432,7 +444,7 @@ public class Parser {
         try {
             comparison();
         } catch (IllegalArgumentException e) {
-            neutralize(e.getMessage(), line, column, "", "&&", "||", ")", "{");
+            neutralize(e.getMessage(), line, column, "", continuations(RecoveryContext.COMPARISON));
         }
     }
 
