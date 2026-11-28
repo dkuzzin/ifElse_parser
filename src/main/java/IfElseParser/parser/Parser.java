@@ -249,11 +249,10 @@ public class Parser {
         } catch (IllegalArgumentException e) {
             errors.add(new ParseError(e.getMessage(), line, column));
 
-            while (hasMore() && current() != '}') {
-                if (firstBranch && isElseBranchStart()) {
-                    break;
-                }
-                advance();
+            if (firstBranch) {
+                recoverTo("}", "else");
+            } else {
+                recoverTo("}");
             }
         }
     }
@@ -264,9 +263,11 @@ public class Parser {
             condition();
         } catch (IllegalArgumentException e) {
             errors.add(new ParseError(e.getMessage(), line, column));
-            skipUntil(')', '{');
+
+            recoverTo(")", "{");
         }
     }
+
 
 
     private void ifElse() {
@@ -411,17 +412,33 @@ public class Parser {
         } catch (IllegalArgumentException e) {
             errors.add(new ParseError(e.getMessage(), line, column));
 
-            while (hasMore()) {
-                skipWhitespace();
-
-                if (!hasMore() || text.startsWith("&&", position) || text.startsWith("||", position) ||
-                        current() == ')' || current() == '{') {
-                    return;
-                }
-
-                advance();
-            }
+            recoverTo("&&", "||", ")", "{");
         }
     }
+
+
+
+    private void recoverTo(String... boundaries) {
+        while (hasMore()) {
+            skipWhitespace();
+
+            if (!hasMore()) {
+                return;
+            }
+
+            for (String boundary : boundaries) {
+                boolean found = boundary.equals("else")
+                        ? isElseBranchStart()
+                        : text.startsWith(boundary, position);
+
+                if (found) {
+                    return;
+                }
+            }
+
+            advance();
+        }
+    }
+
 
 }
