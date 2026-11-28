@@ -201,17 +201,13 @@ public class Parser {
         value();
     }
 
-
-
-
     private void andExpr() {
-        comparison();
+        comparisonWithRecovery();
 
         while (match("&&")) {
-            comparison();
+            comparisonWithRecovery();
         }
     }
-
 
 
     private void assignment(boolean firstBranch) {
@@ -406,6 +402,26 @@ public class Parser {
         }
 
         return next < text.length() && text.charAt(next) == '{';
+    }
+
+
+    private void comparisonWithRecovery() {
+        try {
+            comparison();
+        } catch (IllegalArgumentException e) {
+            errors.add(new ParseError(e.getMessage(), line, column));
+
+            while (hasMore()) {
+                skipWhitespace();
+
+                if (!hasMore() || text.startsWith("&&", position) || text.startsWith("||", position) ||
+                        current() == ')' || current() == '{') {
+                    return;
+                }
+
+                advance();
+            }
+        }
     }
 
 }

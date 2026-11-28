@@ -199,6 +199,29 @@ public class ParserTest {
         """, 2);
 
 
+        testErrors("""
+        if (a > + && b < -) {
+            x = 1;
+        } else {
+            y = 2;
+        }
+        """, 2);
+
+        testErrors(
+                "if (a > + && b < -) { x = 1; } else { y = 2; }",
+                2
+        );
+
+        testErrors(
+                "if (a > + || b < 5) { x = 1; } else { y = 2; }",
+                1
+        );
+
+        testErrors(
+                "if (a > + { x = 1; } else { y = 2; }",
+                2
+        );
+
     }
 
     private static void test(String text, boolean expectedValid) {
