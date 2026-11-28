@@ -192,11 +192,10 @@ public class Parser {
         }
 
         if (atComparisonBoundary()) {
-            errors.add(new ParseError(
-                    "Expected: value", line, column
-            ));
+            errors.add(new ParseError("Expected: value", line, column, "0"));
             return;
         }
+
 
         value();
     }
@@ -247,7 +246,9 @@ public class Parser {
         try {
             assignment(firstBranch);;
         } catch (IllegalArgumentException e) {
-            errors.add(new ParseError(e.getMessage(), line, column));
+            String q = e.getMessage().equals("Expected: ;") ? ";" : "";
+
+            errors.add(new ParseError(e.getMessage(), line, column, q));
 
             if (firstBranch) {
                 recoverTo("}", "else");
@@ -312,19 +313,22 @@ public class Parser {
         return new IllegalArgumentException(message);
     }
 
+
     private void expectClosing(String expected, String next) {
         if (match(expected)) {
             return;
         }
 
         boolean foundNext = next.equals("else") ? isElse() : text.startsWith(next, position);
+
         if (foundNext) {
-            errors.add(new ParseError("Expected: " + expected, line, column));
+            errors.add(new ParseError("Expected: " + expected, line, column, expected));
             return;
         }
 
         throw syntaxError("Expected: " + expected);
     }
+
 
 
 

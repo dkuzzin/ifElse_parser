@@ -236,6 +236,41 @@ public class ParserTest {
                 "if (a > b) { x = + else { y = 2; }",
                 2
         );
+        List<ParseError> errors = new Parser(
+                "if (a > ) { x = 1; } else { y = 2; }"
+        ).analyze();
+
+        System.out.println("q = " + errors.get(0).q());
+
+
+        errors = new Parser("""
+        if (a > b) {
+            x = 10;
+        else {
+            y = 20;
+        }
+        """).analyze();
+
+        for (ParseError error : errors) {
+            System.out.println(error.message() + ", q = " + error.q());
+        }
+
+        errors = new Parser("""
+        if (a > b) {
+            x = 10
+        else {
+            y = 20;
+        }
+        """).analyze();
+
+        StringBuilder q = new StringBuilder();
+
+        for (ParseError error : errors) {
+            System.out.println(error.message() + ", q = " + error.q());
+            q.append(error.q());
+        }
+
+        System.out.println("Combined q = " + q);
 
     }
 
